@@ -59,12 +59,17 @@ func main() {
 
 	r.POST("/calculate",
 	rateLimiter.LimitRoute(ratelimiter.Config{
-		Limit:    100,        // 100 requests
-		Duration: time.Minute * 5, // per 5 minute
+		Limit: 100,
+		Duration: time.Minute * 5,
 	}),
 	financialHandler.Calculate)
 
-	r.GET("/ping", func(c *gin.Context) {
+	r.GET("/ping",
+	rateLimiter.LimitRoute(ratelimiter.Config{
+		Limit: 5,
+		Duration: time.Second * 20,
+	}),
+	func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
 		})

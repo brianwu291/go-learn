@@ -19,17 +19,15 @@ import (
 	financialservice "github.com/brianwu291/go-learn/services/financial"
 )
 
-
-
 func main() {
 	err := dotEnv.Load()
-  if err != nil {
+	if err != nil {
 		fmt.Printf("error loading .env file: %+v", err.Error())
 		return
-  }
+	}
 
 	// Using %+v - shows field names
-  // Using %#v - shows type information and field names
+	// Using %#v - shows type information and field names
 
 	redisDBStr := os.Getenv("REDIS_DB")
 	redisDB, err := strconv.Atoi(redisDBStr)
@@ -58,23 +56,22 @@ func main() {
 	financialHandler := financialhandler.NewFinancialHandler(financialService)
 
 	r.POST("/calculate",
-	rateLimiter.LimitRoute(ratelimiter.Config{
-		Limit: 100,
-		Duration: time.Minute * 5,
-	}),
-	financialHandler.Calculate)
+		rateLimiter.LimitRoute(ratelimiter.Config{
+			Limit:    100,
+			Duration: time.Minute * 5,
+		}),
+		financialHandler.Calculate)
 
 	r.GET("/ping",
-	rateLimiter.LimitRoute(ratelimiter.Config{
-		Limit: 5,
-		Duration: time.Second * 20,
-	}),
-	func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
+		rateLimiter.LimitRoute(ratelimiter.Config{
+			Limit:    5,
+			Duration: time.Second * 20,
+		}),
+		func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"message": "pong",
+			})
 		})
-	})
 
-	
 	r.Run()
 }

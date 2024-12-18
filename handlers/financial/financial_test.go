@@ -67,9 +67,9 @@ func TestFinancialHandler_Calculate(t *testing.T) {
 			},
 		},
 		{
-			name:        "Empty request body",
-			requestBody: nil,
-			setupMock:   func(m *mockFinancialService) {}, // No mock needed for empty body
+			name:           "Empty request body",
+			requestBody:    nil,
+			setupMock:      func(m *mockFinancialService) {}, // No mock needed for empty body
 			expectedStatus: 400,
 			expectedBody: &types.BadRequestResponse{
 				Message: "Request body is empty",

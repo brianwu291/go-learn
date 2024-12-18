@@ -11,7 +11,7 @@ type (
 	FinancialService interface {
 		CalculateFinancial(req types.FinancialRawInfo, roundingDigits int) (types.FinancialResultInfo, error)
 	}
- 	financialService struct {}
+	financialService struct{}
 )
 
 func NewFinancialService() FinancialService {
@@ -25,7 +25,7 @@ func (s *financialService) roundFloat(val float64, digits int) (float64, error) 
 
 	var digitBase = math.Pow(10, float64(digits))
 
-	roundedRatio := math.Round(val * digitBase) / digitBase
+	roundedRatio := math.Round(val*digitBase) / digitBase
 
 	return roundedRatio, nil
 }

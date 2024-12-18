@@ -19,7 +19,6 @@ type (
 	}
 )
 
-
 func NewFinancialHandler(service financialservice.FinancialService) *FinancialHandler {
 	return &FinancialHandler{
 		service: service,

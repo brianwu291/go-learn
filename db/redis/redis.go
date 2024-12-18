@@ -23,7 +23,7 @@ type (
 	pipelineIncrCmd struct {
 		cmd *redis.IntCmd
 	}
-	
+
 	pipelineTTLCmd struct {
 		cmd *redis.DurationCmd
 	}

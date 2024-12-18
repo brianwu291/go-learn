@@ -1,13 +1,12 @@
 package types
 
-
 type (
 	BadRequestResponse struct {
-		Message  string  `json:"message"`
+		Message string `json:"message"`
 	}
 
 	InternalServerErrorResponse struct {
-		Message  string  `json:"message"`
+		Message string `json:"message"`
 	}
 
 	FinancialRawInfo struct {
@@ -17,7 +16,7 @@ type (
 	}
 
 	FinancialResultInfo struct {
-		Profit   float64 `json:"profit" binding:"required"`
-		Ratio    float64 `json:"ratio" binding:"required"`
+		Profit float64 `json:"profit" binding:"required"`
+		Ratio  float64 `json:"ratio" binding:"required"`
 	}
 )

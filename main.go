@@ -17,6 +17,10 @@ import (
 
 	financialhandler "github.com/brianwu291/go-learn/handlers/financial"
 	financialservice "github.com/brianwu291/go-learn/services/financial"
+
+	fakestorehandler "github.com/brianwu291/go-learn/handlers/fakestore"
+	fakestorerepo "github.com/brianwu291/go-learn/repos/fakestore"
+	fakestoreservice "github.com/brianwu291/go-learn/services/fakestore"
 )
 
 func main() {
@@ -55,6 +59,10 @@ func main() {
 	financialService := financialservice.NewFinancialService()
 	financialHandler := financialhandler.NewFinancialHandler(financialService)
 
+	fakeStoreRepo := fakestorerepo.NewFakeStoreRepo()
+	fakeStoreService := fakestoreservice.NewFakeStoreService(fakeStoreRepo)
+	fakeStoreHandler := fakestorehandler.NewFakeStoreHandler(fakeStoreService)
+
 	r.POST("/calculate",
 		rateLimiter.LimitRoute(ratelimiter.Config{
 			Limit:    100,
@@ -62,9 +70,16 @@ func main() {
 		}),
 		financialHandler.Calculate)
 
+	r.GET("/fake-store/all/category",
+		rateLimiter.LimitRoute(ratelimiter.Config{
+			Limit:    50,
+			Duration: time.Minute * 1,
+		}),
+		fakeStoreHandler.GetAllCategories)
+
 	r.GET("/ping",
 		rateLimiter.LimitRoute(ratelimiter.Config{
-			Limit:    5,
+			Limit:    8,
 			Duration: time.Second * 20,
 		}),
 		func(c *gin.Context) {

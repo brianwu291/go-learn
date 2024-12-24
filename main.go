@@ -60,7 +60,7 @@ func main() {
 	financialHandler := financialhandler.NewFinancialHandler(financialService)
 
 	fakeStoreRepo := fakestorerepo.NewFakeStoreRepo()
-	fakeStoreService := fakestoreservice.NewFakeStoreService(fakeStoreRepo)
+	fakeStoreService := fakestoreservice.NewFakeStoreService(cacheClient, fakeStoreRepo)
 	fakeStoreHandler := fakestorehandler.NewFakeStoreHandler(fakeStoreService)
 
 	r.POST("/calculate",
@@ -70,12 +70,19 @@ func main() {
 		}),
 		financialHandler.Calculate)
 
-	r.GET("/fake-store/all/category",
+	r.GET("/fake-store/all/categories",
 		rateLimiter.LimitRoute(ratelimiter.Config{
 			Limit:    50,
 			Duration: time.Minute * 1,
 		}),
 		fakeStoreHandler.GetAllCategories)
+
+	r.GET("/fake-store/all/categories/products",
+		rateLimiter.LimitRoute(ratelimiter.Config{
+			Limit:    50,
+			Duration: time.Minute * 1,
+		}),
+		fakeStoreHandler.GetAllCategoriesProducts)
 
 	r.GET("/ping",
 		rateLimiter.LimitRoute(ratelimiter.Config{

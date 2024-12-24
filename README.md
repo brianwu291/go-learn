@@ -1,34 +1,36 @@
 # Go Learning Project
 
-A hands-on project to learn Golang, implementing a financial calculation service with Redis-based rate limiting.
+REST API implementation with rate limiting, caching, and external API integration.
 
 ## Project Structure
 
 ```
 .
-├── cache/             # Cache interface definitions
-├── constants/         # Application constants
-├── db/                # Database implementations
-│   └── redis/         # Redis client implementation
-├── handlers/          # HTTP request handlers
-│   └── financial/     # Financial calculation endpoints
-├── middlewares/       # HTTP middleware components
-│   └── ratelimiter/   # Redis-based rate limiting
-├── services/          # Business logic layer
-│   └── financial/     # Financial calculation service
-├── shellscripts/      # Utility scripts
-│   └── ratelimiterchecker.sh  # Rate limit testing script
-├── types/             # Common type definitions
-└── main.go            # Application entry point
+├── cache/              # Cache abstractions
+├── constants/          # Application constants
+├── db/                 # Database clients
+│   └── redis/
+├── handlers/          
+│   ├── fakestore/     # Fake store API handlers
+│   └── financial/     # Financial calculation handlers
+├── httpclient/        # HTTP client wrapper
+├── middlewares/
+│   └── ratelimiter/  
+├── repos/             # Repository layer
+│   └── fakestore/     # Fake store API integration
+├── services/          # Business logic
+│   ├── fakestore/    
+│   └── financial/    
+└── types/             # Shared types
 ```
 
 ## Features
 
-- Financial calculations API
-- Redis-based rate limiting
-- Clean architecture pattern
-- Unit tests for handlers and services
-- Shell script for load testing
+- Financial calculations with rate limiting
+- Fake Store API integration with Redis caching
+- Clean architecture with DI
+- Concurrent API requests
+- Unit tests and coverage reporting
 
 ## Technical Stack
 
@@ -36,6 +38,13 @@ A hands-on project to learn Golang, implementing a financial calculation service
 - Gin web framework
 - Redis for rate limiting
 - Environment variable configuration
+
+## Architecture
+- Handler → Service → Repository pattern
+- Interface-based dependency injection
+- Redis for caching and rate limiting
+- Concurrent operations with goroutines
+- Error handling abstractions
 
 ## Setup
 
@@ -75,18 +84,15 @@ or
 `$ . ./shellscripts/ratelimiterchecker.sh`
 
 ## API Endpoints
-- `POST /calculate`: Financial calculation endpoint
-  - With rate limit 100 requests per 5 minutes
-  - example req payload:
-    ```
-    {
-      "revenue": 100,
-      "expenses": 50,
-      "taxRate": 0.3
-    }
-    ```
-- `GET /ping`: Health check endpoint
-  - With rate limit: 5 requests per 20 secs
+### Financial
+- `POST /calculate`: Financial calculations
+  - Rate limit: 100 req/5min
+  - Payload: `{"revenue": 100, "expenses": 50, "taxRate": 0.3}`
+
+### Fake Store
+- `GET /products`: Get all products with category filtering
+  - Redis caching
+  - Concurrent category fetching
 
 ## Learning Goals
 

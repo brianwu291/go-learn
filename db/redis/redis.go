@@ -49,7 +49,14 @@ func NewClient(cfg *cache.Config) (*Client, error) {
 }
 
 func (c *Client) Get(ctx context.Context, key string) (string, error) {
-	return c.client.Get(ctx, key).Result()
+	val, err := c.client.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", cache.NewKeyNotFoundError(key)
+		}
+		return "", cache.NewConnectionError(err)
+	}
+	return val, nil
 }
 
 func (c *Client) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {

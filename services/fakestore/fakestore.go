@@ -36,7 +36,7 @@ func (s *fakeStoreService) GetCategories(ctx context.Context, skipCache bool) ([
 		return s.repo.GetCategories(ctx)
 	}
 
-	const categoriesCacheKey = "categories:all"
+	const categoriesCacheKey = "fakeStore:categories:all"
 
 	if categories, err := s.getCachedCategories(ctx, categoriesCacheKey); err == nil {
 		return categories, nil

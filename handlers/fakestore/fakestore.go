@@ -3,7 +3,6 @@ package fakestorehandler
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	gin "github.com/gin-gonic/gin"
 
@@ -38,60 +37,48 @@ func (h *FakeStoreHandler) GetAllCategories(c *gin.Context) {
 func (h *FakeStoreHandler) GetAllCategoriesProducts(c *gin.Context) {
 	allCategories, err := h.service.GetCategories(c, false)
 	if err != nil {
+		fmt.Printf("failed to get all categories: %+v", err)
 		internalServerErr := fmt.Errorf(constants.InternalServerErrorMessage)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, types.InternalServerErrorResponse{Message: internalServerErr.Error()})
 		return
 	}
 
-	var wg sync.WaitGroup
+	maxWorkers := 5
+	jobs := make(chan types.Category, len(allCategories))
 	allProducts := make(chan []types.Product, len(allCategories))
-	errors := make(chan error, len(allCategories))
-	for i := 0; i < len(allCategories); i += 1 {
-		wg.Add(1)
-		go func(category types.Category) {
-			defer wg.Done()
-			categoryProducts, err := h.service.GetProductsByCategory(c, category)
-			if err != nil {
-				errors <- err
-				return
+	errors := make(chan error, 1)
+	for i := 0; i < maxWorkers; i += 1 {
+		go func() {
+			for job := range jobs {
+				categoryProducts, err := h.service.GetProductsByCategory(c, job)
+				if err != nil {
+					errors <- err
+					break
+				}
+				allProducts <- categoryProducts
 			}
-			allProducts <- categoryProducts
-		}(allCategories[i])
+		}()
 	}
-	go func() {
-		wg.Wait()
-		close(allProducts)
-		close(errors)
-	}()
+	for _, category := range allCategories {
+		jobs <- category
+	}
+	close(jobs)
 
 	var combinedProducts []types.Product
 	var combinedErrors []error
-	productsOpen, errorsOpen := true, true
-
-	for productsOpen || errorsOpen {
+	expectedResults := len(allCategories)
+	for i := 0; i < expectedResults; i += 1 {
 		select {
-		case products, ok := <-allProducts:
-			if !ok {
-				productsOpen = false
-				continue
-			}
-			combinedProducts = append(combinedProducts, products...)
-
-		case err, ok := <-errors:
-			if !ok {
-				errorsOpen = false
-				continue
-			}
+		case err := <-errors:
 			combinedErrors = append(combinedErrors, err)
+			errorMessage := fmt.Sprintf("%s: err when getting categories products: %+v",
+				constants.InternalServerErrorMessage, combinedErrors)
+			c.AbortWithStatusJSON(http.StatusInternalServerError,
+				types.InternalServerErrorResponse{Message: errorMessage})
+			return
+		case products := <-allProducts:
+			combinedProducts = append(combinedProducts, products...)
 		}
-	}
-
-	if len(combinedErrors) > 0 {
-		errorMessage := fmt.Sprintf("%s: err when getting categories products: %+v",
-			constants.InternalServerErrorMessage, combinedErrors)
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			types.InternalServerErrorResponse{Message: errorMessage})
-		return
 	}
 
 	c.JSON(http.StatusOK, combinedProducts)

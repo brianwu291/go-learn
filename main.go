@@ -23,6 +23,26 @@ import (
 	fakestoreservice "github.com/brianwu291/go-learn/services/fakestore"
 )
 
+var (
+	StrictAPIConfig = ratelimiter.Config{
+		Limit:                   100,
+		Duration:                5 * time.Minute,
+		ClientIdentifierOptions: []ratelimiter.ClientIdentifierOption{ratelimiter.ClientIP, ratelimiter.UserAgent},
+	}
+
+	NormalAPIConfig = ratelimiter.Config{
+		Limit:                   1000,
+		Duration:                15 * time.Minute,
+		ClientIdentifierOptions: []ratelimiter.ClientIdentifierOption{ratelimiter.ClientIP},
+	}
+
+	PublicAPIConfig = ratelimiter.Config{
+		Limit:                   5000,
+		Duration:                time.Hour,
+		ClientIdentifierOptions: []ratelimiter.ClientIdentifierOption{ratelimiter.ClientIP},
+	}
+)
+
 func main() {
 	err := dotEnv.Load()
 	if err != nil {
@@ -64,31 +84,19 @@ func main() {
 	fakeStoreHandler := fakestorehandler.NewFakeStoreHandler(fakeStoreService)
 
 	r.POST("/calculate",
-		rateLimiter.LimitRoute(ratelimiter.Config{
-			Limit:    100,
-			Duration: time.Minute * 5,
-		}),
+		rateLimiter.LimitRoute(StrictAPIConfig),
 		financialHandler.Calculate)
 
 	r.GET("/fake-store/all/categories",
-		rateLimiter.LimitRoute(ratelimiter.Config{
-			Limit:    50,
-			Duration: time.Minute * 1,
-		}),
+		rateLimiter.LimitRoute(NormalAPIConfig),
 		fakeStoreHandler.GetAllCategories)
 
 	r.GET("/fake-store/all/categories/products",
-		rateLimiter.LimitRoute(ratelimiter.Config{
-			Limit:    50,
-			Duration: time.Minute * 1,
-		}),
+		rateLimiter.LimitRoute(PublicAPIConfig),
 		fakeStoreHandler.GetAllCategoriesProducts)
 
 	r.GET("/ping",
-		rateLimiter.LimitRoute(ratelimiter.Config{
-			Limit:    8,
-			Duration: time.Second * 20,
-		}),
+		rateLimiter.LimitRoute(NormalAPIConfig),
 		func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"message": "pong",

@@ -1,6 +1,7 @@
 package rateLimiter
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,8 +11,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type (
+	RateLimiter struct {
+		cacheClient cache.Client
+	}
+
+	ClientIdentifierOption string
+	Config                 struct {
+		Limit                   int64
+		Duration                time.Duration
+		ClientIdentifierOptions []ClientIdentifierOption
+	}
+)
+
 const (
-	maxDuration = 15 * time.Minute
+	ClientIP        ClientIdentifierOption = "ClientIP"
+	UserAgent       ClientIdentifierOption = "UserAgent"
+	maxDuration                            = 15 * time.Minute
+	defaultLimit                           = 100
+	defaultDuration                        = 1 * time.Minute
 
 	rateLimitScript = `
     local key = KEYS[1]
@@ -40,15 +58,8 @@ const (
   `
 )
 
-type (
-	RateLimiter struct {
-		cacheClient cache.Client
-	}
-
-	Config struct {
-		Limit    int64
-		Duration time.Duration
-	}
+var (
+	ErrInvalidConfig = errors.New("invalid rate limit configuration")
 )
 
 func NewRateLimiter(cacheClient cache.Client) *RateLimiter {
@@ -71,18 +82,48 @@ func getSafePath(c *gin.Context) string {
 	return path
 }
 
-func (rl *RateLimiter) formatKey(path, method, clientIdentifier string) string {
-	return fmt.Sprintf("ratelimit:%s:%s:%s", path, method, clientIdentifier)
+func (rl *RateLimiter) formatKey(path string, method string, clientIdentifiers []string) string {
+	return fmt.Sprintf("ratelimit:%s:%s:%s", path, method, strings.Join(clientIdentifiers, ":"))
+}
+
+func (rl *RateLimiter) getClientIdentifiers(c *gin.Context, identifierOptions []ClientIdentifierOption) []string {
+	result := make([]string, 0, len(identifierOptions))
+	for _, option := range identifierOptions {
+		var identifier string
+		switch option {
+		case ClientIP:
+			identifier = c.ClientIP()
+		case UserAgent:
+			identifier = c.Request.UserAgent()
+		default:
+			fmt.Printf("unsupported identifier option: %s", option)
+			continue
+		}
+
+		if identifier != "" {
+			result = append(result, identifier)
+		}
+	}
+	if len(result) == 0 {
+		// at least one client identifier with IP
+		result = append(result, c.ClientIP())
+	}
+	return result
 }
 
 func (rl *RateLimiter) LimitRoute(config Config) gin.HandlerFunc {
+	if err := config.validate(); err != nil {
+		panic(err)
+	}
+
 	if config.Duration > maxDuration {
 		config.Duration = maxDuration
 	}
 
 	return func(c *gin.Context) {
 		path := getSafePath(c)
-		key := rl.formatKey(path, c.Request.Method, c.ClientIP())
+		clientIdentifiers := rl.getClientIdentifiers(c, config.ClientIdentifierOptions)
+		key := rl.formatKey(path, c.Request.Method, clientIdentifiers)
 
 		// Execute atomic Lua script
 		result, err := rl.cacheClient.Eval(
@@ -134,4 +175,17 @@ func (rl *RateLimiter) LimitRoute(config Config) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func (config Config) validate() error {
+	if config.Limit <= 0 {
+		return fmt.Errorf("%w: limit must be positive", ErrInvalidConfig)
+	}
+	if config.Duration <= 0 {
+		return fmt.Errorf("%w: duration must be positive", ErrInvalidConfig)
+	}
+	if len(config.ClientIdentifierOptions) == 0 {
+		return fmt.Errorf("%w: at least one identifier option required", ErrInvalidConfig)
+	}
+	return nil
 }

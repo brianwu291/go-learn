@@ -10,17 +10,17 @@ REST API implementation with rate limiting, caching, and external API integratio
 ├── constants/          # Application constants
 ├── db/                 # Database clients
 │   └── redis/
-├── handlers/          
+├── handlers/
 │   ├── fakestore/     # Fake store API handlers
 │   └── financial/     # Financial calculation handlers
 ├── httpclient/        # HTTP client wrapper
 ├── middlewares/
-│   └── ratelimiter/  
+│   └── ratelimiter/
 ├── repos/             # Repository layer
 │   └── fakestore/     # Fake store API integration
 ├── services/          # Business logic
-│   ├── fakestore/    
-│   └── financial/    
+│   ├── fakestore/
+│   └── financial/
 └── types/             # Shared types
 ```
 
@@ -40,6 +40,7 @@ REST API implementation with rate limiting, caching, and external API integratio
 - Environment variable configuration
 
 ## Architecture
+
 - Handler → Service → Repository pattern
 - Interface-based dependency injection
 - Redis for caching and rate limiting
@@ -48,10 +49,15 @@ REST API implementation with rate limiting, caching, and external API integratio
 
 ## Setup
 
+Can either choose Mac or Docker
+
+### With Mac:
+
 1. Install dependencies:
-`$ go mod download`
+   `$ go mod download`
 
 2. Set up environment variables in .env:
+
 ```
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -60,22 +66,27 @@ REDIS_DB=0
 ```
 
 3. Run the application:
-`$ go run main.go` or `$ air` for hot reload
+   `$ go run main.go` or `$ air` for hot reload
 
+### With Docker:
+
+1. Go to `/development-container` folder
+2. Run the whole application:
+   `docker compose up --build`
+   (This include `air` command, so hot-reload supported)
 
 ## Testing
 
 1. Run all tests only:
-`$ go test ./...`
+   `$ go test ./...`
 
 2. Run all tests with coverage result:
-`$ go test -coverprofile=coverage.out ./...` (get the coverage file)
-or 
-`$ go test -v -cover ./...`
+   `$ go test -coverprofile=coverage.out ./...` (get the coverage file)
+   or
+   `$ go test -v -cover ./...`
 
 3. Check the test coverage on browser after run `$ go test -coverprofile=coverage.out ./...`:
-`$ go tool cover -html=coverage.out ` 
-
+   `$ go tool cover -html=coverage.out `
 
 ## Test rate limiting:
 
@@ -84,12 +95,15 @@ or
 `$ . ./shellscripts/ratelimiterchecker.sh`
 
 ## API Endpoints
+
 ### Financial
+
 - `POST /calculate`: Financial calculations
   - Rate limit: 100 req/5min
   - Payload: `{"revenue": 100, "expenses": 50, "taxRate": 0.3}`
 
 ### Fake Store
+
 - `GET /products`: Get all products with category filtering
   - Redis caching
   - Concurrent category fetching
@@ -105,4 +119,5 @@ or
 - Shell scripting
 
 ## License
+
 See LICENSE file.

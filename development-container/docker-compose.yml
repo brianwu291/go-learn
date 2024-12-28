@@ -1,0 +1,36 @@
+---
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..  # Build context is set to parent directory
+      dockerfile: development-container/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ..:/app  # Mount parent directory
+      - go-modules:/go/pkg/mod
+      - tmp-air:/app/tmp
+
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=8080
+      - REDIS_PASSWORD=""
+      - REDIS_DB=0
+      # Add other environment variables your application needs
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7.2.6-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  go-modules:
+  redis-data:
+  tmp-air: # volume for Air's temporary files

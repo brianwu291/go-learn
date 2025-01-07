@@ -1,11 +1,12 @@
 #!/bin/sh
 
-# chmod +x db/scripts/migrate.sh
+# cd `/db` folder
+# chmod +x ./scripts/migrate.sh
 # Usage examples:
-# .db/scripts/migrate.sh up
-# .db/scripts/migrate.sh down
-# .db/scripts/migrate.sh force VERSION
-# .db/scripts/migrate.sh goto VERSION
+# ./scripts/migrate.sh up
+# ./scripts/migrate.sh down
+# ./scripts/migrate.sh force VERSION
+# ./scripts/migrate.sh goto VERSION
 
 # database connection values
 DB_HOST="${DB_HOST}"

@@ -57,8 +57,7 @@ func main() {
 	// Using %+v - shows field names
 	// Using %#v - shows type information and field names
 
-	postgresConfig := postgres.LoadConfigFromEnv()
-	postgresDB, dbInitErr := postgres.New(postgresConfig)
+	postgresDB, dbInitErr := postgres.NewDatabase()
 	if dbInitErr != nil {
 		fmt.Printf("failed to initialize postgres database: %+v\n", dbInitErr)
 		return
@@ -118,14 +117,6 @@ func main() {
 	r.GET("/fake-store/all/categories/products",
 		rateLimiter.LimitRoute(PublicAPIConfig),
 		fakeStoreHandler.GetAllCategoriesProducts)
-
-	r.GET("/ping",
-		rateLimiter.LimitRoute(NormalAPIConfig),
-		func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"message": "pong",
-			})
-		})
 
 	r.Run()
 }

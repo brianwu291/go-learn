@@ -1,10 +1,13 @@
 FROM golang:1.23.4-alpine
 
-# Add git and necessary build tools
-RUN apk add --no-cache git curl
+# Add git, curl and postgresql-client for database tools
+RUN apk add --no-cache git curl postgresql-client
 
 # Install Air for hot-reloading
 RUN curl -sSf https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh
+
+# Install golang-migrate
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 # Set working directory
 WORKDIR /app

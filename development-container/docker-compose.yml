@@ -19,9 +19,16 @@ services:
       - PORT=8080
       - REDIS_PASSWORD=""
       - REDIS_DB=0
-      # Add other environment variables your application needs
+      # PostgreSQL environment variables
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=brianwu291
+      - DB_NAME=motor-rental
+      - DB_PASSWORD=
+      - DB_MAX_POOL_CONS=100
     depends_on:
       - redis
+      - postgres
 
   redis:
     image: redis:7.2.6-alpine
@@ -29,8 +36,24 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=motor-rental
+      - POSTGRES_USER=brianwu291
+      - POSTGRES_HOST_AUTH_METHOD=trust  # Allows connections without password for local dev
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brianwu291 -d motor-rental"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   go-modules:
   redis-data:
   tmp-air: # volume for Air's temporary files
+  postgres-data:  # Persistent volume for PostgreSQL data

@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	gin "github.com/gin-gonic/gin"
@@ -13,6 +11,7 @@ import (
 	cache "github.com/brianwu291/go-learn/cache"
 	postgres "github.com/brianwu291/go-learn/db/postgres"
 	redis "github.com/brianwu291/go-learn/db/redis"
+	utils "github.com/brianwu291/go-learn/utils"
 
 	ratelimiter "github.com/brianwu291/go-learn/middlewares/ratelimiter"
 
@@ -64,17 +63,11 @@ func main() {
 	}
 	defer postgresDB.Close()
 
-	redisDBStr := os.Getenv("REDIS_DB")
-	redisDB, err := strconv.Atoi(redisDBStr)
-	if err != nil {
-		fmt.Printf("error on parsing REDIS_DB env value: %+v. REDIS_DB: %+v\n", err.Error(), redisDBStr)
-		return
-	}
-
+	redisDB := utils.GetEnvAsInt("REDIS_DB", 0)	
 	cacheConfig := &cache.Config{
-		Host:     os.Getenv("REDIS_HOST"),
-		Port:     os.Getenv("REDIS_PORT"),
-		Password: os.Getenv("REDIS_PASSWORD"),
+		Host:     utils.GetEnv("REDIS_HOST", "localhost"),
+		Port:     utils.GetEnv("REDIS_PORT", "6379"),
+		Password: utils.GetEnv("REDIS_PASSWORD", ""),
 		DB:       redisDB,
 	}
 	cacheClient, err := redis.NewClient(cacheConfig)
